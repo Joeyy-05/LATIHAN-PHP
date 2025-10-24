@@ -7,39 +7,41 @@ class TodoModel
 
     public function __construct()
     {
-        // Inisialisasi koneksi database PostgreSQL
+        // ... (Fungsi construct tetap sama) ...
         $this->conn = pg_connect('host=' . DB_HOST . ' port=' . DB_PORT . ' dbname=' . DB_NAME . ' user=' . DB_USER . ' password=' . DB_PASSWORD);
         if (!$this->conn) {
             die('Koneksi database gagal');
         }
     }
 
-    /**
-     * Modifikasi: Fungsi ini sekarang menerima parameter filter.
-     * @param string $filter ('all', 'finished', 'unfinished')
-     */
-    public function getAllTodos($filter = 'all')
+    public function getAllTodos($filter = 'all', $search = '')
     {
-        // Query dasar
+        // ... (Fungsi getAllTodos tetap sama seperti Poin 3) ...
         $query = 'SELECT id, title, description, is_finished, created_at, updated_at 
                   FROM todo';
-        
         $params = [];
-        
-        // Menambahkan WHERE clause berdasarkan filter
-        if ($filter === 'finished') {
-            $query .= ' WHERE is_finished = $1';
-            $params[] = 't'; // 't' untuk true di PostgreSQL
-        } elseif ($filter === 'unfinished') {
-            $query .= ' WHERE is_finished = $1';
-            $params[] = 'f'; // 'f' untuk false di PostgreSQL
-        }
-        // Jika filter 'all', tidak ada WHERE clause ditambahkan.
+        $whereClauses = [];
+        $paramCounter = 1; 
 
-        // (Kita akan ubah ORDER BY ini nanti untuk Poin 6: Sorting)
+        if ($filter === 'finished') {
+            $whereClauses[] = 'is_finished = $' . $paramCounter++;
+            $params[] = 't'; 
+        } elseif ($filter === 'unfinished') {
+            $whereClauses[] = 'is_finished = $' . $paramCounter++;
+            $params[] = 'f'; 
+        }
+
+        if (!empty($search)) {
+            $whereClauses[] = '(title ILIKE $' . $paramCounter . ' OR description ILIKE $' . $paramCounter . ')';
+            $params[] = '%' . $search . '%'; 
+        }
+
+        if (!empty($whereClauses)) {
+            $query .= ' WHERE ' . implode(' AND ', $whereClauses);
+        }
+
         $query .= ' ORDER BY id ASC';
         
-        // Menjalankan query
         if (empty($params)) {
             $result = pg_query($this->conn, $query);
         } else {
@@ -49,12 +51,27 @@ class TodoModel
         $todos = [];
         if ($result && pg_num_rows($result) > 0) {
             while ($row = pg_fetch_assoc($result)) {
-                // Konversi string 't'/'f' dari PostgreSQL ke boolean PHP (true/false)
                 $row['is_finished'] = ($row['is_finished'] === 't'); 
                 $todos[] = $row;
             }
         }
         return $todos;
+    }
+
+    /**
+     * PENAMBAHAN BARU: Fungsi untuk Validasi (POIN 4)
+     * Mencari todo berdasarkan judul (case-insensitive)
+     */
+    public function getTodoByTitle($title)
+    {
+        // Gunakan ILIKE untuk case-insensitive
+        $query = 'SELECT * FROM todo WHERE title ILIKE $1 LIMIT 1';
+        $result = pg_query_params($this->conn, $query, [$title]);
+        
+        if ($result && pg_num_rows($result) > 0) {
+            return pg_fetch_assoc($result); // Kembalikan data todo jika ditemukan
+        }
+        return null; // Kembalikan null jika tidak ditemukan
     }
 
     public function createTodo($title, $description)

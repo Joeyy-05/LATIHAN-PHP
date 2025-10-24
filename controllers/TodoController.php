@@ -5,7 +5,7 @@ class TodoController
 {
     public function index()
     {
-        // 1. Tentukan filter yang aktif
+        // 1. Tentukan filter yang aktif (dari Poin 2)
         $filter = 'all'; // Default filter
         if (isset($_GET['filter'])) {
             if ($_GET['filter'] === 'finished') {
@@ -15,11 +15,17 @@ class TodoController
             }
         }
 
-        // 2. Panggil model dengan filter yang sesuai
+        // 2. Tentukan kata kunci pencarian (dari Poin 3)
+        $search = ''; // Default tidak ada pencarian
+        if (isset($_GET['search'])) {
+            $search = trim($_GET['search']); // trim() untuk menghapus spasi berlebih
+        }
+
+        // 3. Panggil model dengan filter DAN search yang sesuai
         $todoModel = new TodoModel();
-        $todos = $todoModel->getAllTodos($filter); // Teruskan $filter ke model
+        $todos = $todoModel->getAllTodos($filter, $search); // Teruskan $filter dan $search
         
-        // 3. Muat view (View akan membutuhkan $todos dan $filter)
+        // 4. Muat view (View akan membutuhkan $todos, $filter, dan $search)
         include (__DIR__ . '/../views/TodoView.php');
     }
 
@@ -32,6 +38,7 @@ class TodoController
             $todoModel = new TodoModel();
             $todoModel->createTodo($title, $description);
         }
+        // Redirect untuk membersihkan POST dan GET
         header('Location: index.php');
     }
 
@@ -46,6 +53,7 @@ class TodoController
             $todoModel = new TodoModel();
             $todoModel->updateTodo($id, $title, $description, $is_finished);
         }
+        // Redirect untuk membersihkan POST
         header('Location: index.php');
     }
 

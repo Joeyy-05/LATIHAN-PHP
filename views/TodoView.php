@@ -28,6 +28,20 @@
                        href="index.php?filter=unfinished">Belum Selesai</a>
                 </li>
             </ul>
+            
+            <form action="index.php" method="GET" class="mb-3">
+                <?php if ($filter !== 'all'): ?>
+                    <input type="hidden" name="filter" value="<?= htmlspecialchars($filter) ?>">
+                <?php endif; ?>
+                
+                <div class="input-group">
+                    <input type="text" name="search" class="form-control" 
+                           placeholder="Cari berdasarkan judul atau deskripsi..." 
+                           value="<?= htmlspecialchars($search) ?>">
+                    
+                    <button class="btn btn-outline-secondary" type="submit">Cari</button>
+                </div>
+            </form>
             <table class="table table-striped">
                 <thead>
                     <tr>
@@ -71,7 +85,13 @@
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="5" class="text-center text-muted">Belum ada data tersedia!</td>
+                        <td colspan="5" class="text-center text-muted">
+                            <?php if (!empty($search)): ?>
+                                Hasil pencarian "<?= htmlspecialchars($search) ?>" tidak ditemukan.
+                            <?php else: ?>
+                                Belum ada data tersedia!
+                            <?php endif; ?>
+                        </td>
                     </tr>
                 <?php endif; ?>
                 </tbody>
@@ -100,7 +120,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn-secondary" data-bs-dismiss="modal">Batal</button>
                     <button type="submit" class="btn btn-primary">Save</button>
                 </div>
             </form>
@@ -155,15 +175,17 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
                 <a id="btnDeleteTodo" class="btn btn-danger">Ya, Tetap Hapus</a>
             </div>
         </div>
     </div>
 </div>
 
+
 <script src="/assets/vendor/bootstrap-5.3.8-dist/js/bootstrap.min.js"></script>
 <script>
+// ... (FungSI Javascript showModalEditTodo dan showModalDeleteTodo tetap sama) ...
 function showModalEditTodo(todoId, title, description, is_finished) {
     document.getElementById("inputEditTodoId").value = todoId;
     document.getElementById("inputEditTitle").value = title;
