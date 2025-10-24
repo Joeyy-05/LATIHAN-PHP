@@ -17,8 +17,7 @@
                 <thead>
                     <tr>
                         <th scope="col">#</th>
-                        <th scope="col">Aktivitas</th>
-                        <th scope="col">Status</th>
+                        <th scope="col">Judul</th> <th scope="col">Status</th>
                         <th scope="col">Tanggal Dibuat</th>
                         <th scope="col">Tindakan</th>
                     </tr>
@@ -28,9 +27,9 @@
                     <?php foreach ($todos as $i => $todo): ?>
                     <tr>
                         <td><?= $i + 1 ?></td>
-                        <td><?= htmlspecialchars($todo['activity']) ?></td>
+                        <td><?= htmlspecialchars($todo['title']) ?></td>
                         <td>
-                            <?php if ($todo['status']): ?>
+                            <?php if ($todo['is_finished']): ?>
                                 <span class="badge bg-success">Selesai</span>
                             <?php else: ?>
                                 <span class="badge bg-danger">Belum Selesai</span>
@@ -39,11 +38,16 @@
                         <td><?= date('d F Y - H:i', strtotime($todo['created_at'])) ?></td>
                         <td>
                             <button class="btn btn-sm btn-warning"
-                                onclick="showModalEditTodo(<?= $todo['id'] ?>, '<?= htmlspecialchars(addslashes($todo['activity'])) ?>', <?= $todo['status'] ?>)">
+                                onclick="showModalEditTodo(
+                                    <?= $todo['id'] ?>, 
+                                    '<?= htmlspecialchars(addslashes($todo['title'])) ?>', 
+                                    '<?= htmlspecialchars(addslashes($todo['description'])) ?>', 
+                                    <?= $todo['is_finished'] ? 'true' : 'false' ?>
+                                )">
                                 Ubah
                             </button>
                             <button class="btn btn-sm btn-danger"
-                                onclick="showModalDeleteTodo(<?= $todo['id'] ?>, '<?= htmlspecialchars(addslashes($todo['activity'])) ?>')">
+                                onclick="showModalDeleteTodo(<?= $todo['id'] ?>, '<?= htmlspecialchars(addslashes($todo['title'])) ?>')">
                                 Hapus
                             </button>
                         </td>
@@ -60,7 +64,6 @@
     </div>
 </div>
 
-<!-- MODAL ADD TODO -->
 <div class="modal fade" id="addTodo" tabindex="-1" aria-labelledby="addTodoLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -71,9 +74,13 @@
             <form action="?page=create" method="POST">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="inputActivity" class="form-label">Aktivitas</label>
-                        <input type="text" name="activity" class="form-control" id="inputActivity"
+                        <label for="inputTitle" class="form-label">Judul</label>
+                        <input type="text" name="title" class="form-control" id="inputTitle"
                             placeholder="Contoh: Belajar membuat aplikasi website sederhana" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputDescription" class="form-label">Deskripsi (Opsional)</label>
+                        <textarea name="description" class="form-control" id="inputDescription" rows="3"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -85,7 +92,6 @@
     </div>
 </div>
 
-<!-- MODAL EDIT TODO -->
 <div class="modal fade" id="editTodo" tabindex="-1" aria-labelledby="editTodoLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -97,16 +103,17 @@
                 <input name="id" type="hidden" id="inputEditTodoId">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="inputEditActivity" class="form-label">Aktivitas</label>
-                        <input type="text" name="activity" class="form-control" id="inputEditActivity"
+                        <label for="inputEditTitle" class="form-label">Judul</label>
+                        <input type="text" name="title" class="form-control" id="inputEditTitle"
                             placeholder="Contoh: Belajar membuat aplikasi website sederhana" required>
                     </div>
-                    <div class="mb-3">
-                        <label for="selectEditStatus" class="form-label">Status</label>
-                        <select class="form-select" name="status" id="selectEditStatus">
-                            <option value="0">Belum Selesai</option>
-                            <option value="1">Selesai</option>
-                        </select>
+                    <div class_mb-3="mb-3">
+                        <label for="inputEditDescription" class="form-label">Deskripsi (Opsional)</label>
+                        <textarea name="description" class="form-control" id="inputEditDescription" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="is_finished" class="form-check-input" id="inputEditIsFinished">
+                        <label class="form-check-label" for="inputEditIsFinished">Tandai sebagai selesai</label>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -118,7 +125,6 @@
     </div>
 </div>
 
-<!-- MODAL DELETE TODO -->
 <div class="modal fade" id="deleteTodo" tabindex="-1" aria-labelledby="deleteTodoLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -128,7 +134,7 @@
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    Kamu akan menghapus todo <strong class="text-danger" id="deleteTodoActivity"></strong>.
+                    Kamu akan menghapus todo <strong class="text-danger" id="deleteTodoTitle"></strong>.
                     Apakah kamu yakin?
                 </div>
             </div>
@@ -142,19 +148,33 @@
 
 <script src="/assets/vendor/bootstrap-5.3.8-dist/js/bootstrap.min.js"></script>
 <script>
-function showModalEditTodo(todoId, activity, status) {
+/**
+ * Memperbarui fungsi Javascript untuk Edit Modal
+ * Sekarang menerima: id, title, description, dan is_finished (boolean)
+ */
+function showModalEditTodo(todoId, title, description, is_finished) {
+    // Mengisi input-input baru
     document.getElementById("inputEditTodoId").value = todoId;
-    document.getElementById("inputEditActivity").value = activity;
-    document.getElementById("selectEditStatus").value = status;
+    document.getElementById("inputEditTitle").value = title;
+    document.getElementById("inputEditDescription").value = description;
+    
+    // Mengatur status checkbox
+    document.getElementById("inputEditIsFinished").checked = is_finished; 
+    
     var myModal = new bootstrap.Modal(document.getElementById("editTodo"));
     myModal.show();
 }
-function showModalDeleteTodo(todoId, activity) {
-    document.getElementById("deleteTodoActivity").innerText = activity;
+
+/**
+ * Memperbarui fungsi Javascript untuk Delete Modal
+ * Menggunakan 'title'
+ */
+function showModalDeleteTodo(todoId, title) {
+    document.getElementById("deleteTodoTitle").innerText = title;
     document.getElementById("btnDeleteTodo").setAttribute("href", `?page=delete&id=${todoId}`);
     var myModal = new bootstrap.Modal(document.getElementById("deleteTodo"));
     myModal.show();
 }
 </script>
 </body>
-</html>
+</html> 
