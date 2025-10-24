@@ -13,11 +13,27 @@
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTodo">Tambah Data</button>
             </div>
             <hr />
+
+            <ul class="nav nav-pills mb-3">
+                <li class="nav-item">
+                    <a class="nav-link <?php if ($filter === 'all') echo 'active'; ?>" 
+                       href="index.php">Semua</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?php if ($filter === 'finished') echo 'active'; ?>" 
+                       href="index.php?filter=finished">Selesai</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?php if ($filter === 'unfinished') echo 'active'; ?>" 
+                       href="index.php?filter=unfinished">Belum Selesai</a>
+                </li>
+            </ul>
             <table class="table table-striped">
                 <thead>
                     <tr>
                         <th scope="col">#</th>
-                        <th scope="col">Judul</th> <th scope="col">Status</th>
+                        <th scope="col">Judul</th>
+                        <th scope="col">Status</th>
                         <th scope="col">Tanggal Dibuat</th>
                         <th scope="col">Tindakan</th>
                     </tr>
@@ -107,7 +123,7 @@
                         <input type="text" name="title" class="form-control" id="inputEditTitle"
                             placeholder="Contoh: Belajar membuat aplikasi website sederhana" required>
                     </div>
-                    <div class_mb-3="mb-3">
+                    <div class="mb-3">
                         <label for="inputEditDescription" class="form-label">Deskripsi (Opsional)</label>
                         <textarea name="description" class="form-control" id="inputEditDescription" rows="3"></textarea>
                     </div>
@@ -139,7 +155,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn-secondary" data-bs-dismiss="modal">Batal</button>
                 <a id="btnDeleteTodo" class="btn btn-danger">Ya, Tetap Hapus</a>
             </div>
         </div>
@@ -148,27 +164,15 @@
 
 <script src="/assets/vendor/bootstrap-5.3.8-dist/js/bootstrap.min.js"></script>
 <script>
-/**
- * Memperbarui fungsi Javascript untuk Edit Modal
- * Sekarang menerima: id, title, description, dan is_finished (boolean)
- */
 function showModalEditTodo(todoId, title, description, is_finished) {
-    // Mengisi input-input baru
     document.getElementById("inputEditTodoId").value = todoId;
     document.getElementById("inputEditTitle").value = title;
     document.getElementById("inputEditDescription").value = description;
-    
-    // Mengatur status checkbox
     document.getElementById("inputEditIsFinished").checked = is_finished; 
-    
     var myModal = new bootstrap.Modal(document.getElementById("editTodo"));
     myModal.show();
 }
 
-/**
- * Memperbarui fungsi Javascript untuk Delete Modal
- * Menggunakan 'title'
- */
 function showModalDeleteTodo(todoId, title) {
     document.getElementById("deleteTodoTitle").innerText = title;
     document.getElementById("btnDeleteTodo").setAttribute("href", `?page=delete&id=${todoId}`);
@@ -177,4 +181,4 @@ function showModalDeleteTodo(todoId, title) {
 }
 </script>
 </body>
-</html> 
+</html>

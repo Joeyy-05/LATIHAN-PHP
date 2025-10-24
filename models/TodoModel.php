@@ -14,15 +14,38 @@ class TodoModel
         }
     }
 
-    public function getAllTodos()
+    /**
+     * Modifikasi: Fungsi ini sekarang menerima parameter filter.
+     * @param string $filter ('all', 'finished', 'unfinished')
+     */
+    public function getAllTodos($filter = 'all')
     {
-        // Menggunakan nama kolom baru dan diurutkan berdasarkan ID.
-        // (Kita akan ubah ORDER BY ini nanti untuk Poin 6: Sorting)
+        // Query dasar
         $query = 'SELECT id, title, description, is_finished, created_at, updated_at 
-                  FROM todo 
-                  ORDER BY id ASC';
+                  FROM todo';
         
-        $result = pg_query($this->conn, $query);
+        $params = [];
+        
+        // Menambahkan WHERE clause berdasarkan filter
+        if ($filter === 'finished') {
+            $query .= ' WHERE is_finished = $1';
+            $params[] = 't'; // 't' untuk true di PostgreSQL
+        } elseif ($filter === 'unfinished') {
+            $query .= ' WHERE is_finished = $1';
+            $params[] = 'f'; // 'f' untuk false di PostgreSQL
+        }
+        // Jika filter 'all', tidak ada WHERE clause ditambahkan.
+
+        // (Kita akan ubah ORDER BY ini nanti untuk Poin 6: Sorting)
+        $query .= ' ORDER BY id ASC';
+        
+        // Menjalankan query
+        if (empty($params)) {
+            $result = pg_query($this->conn, $query);
+        } else {
+            $result = pg_query_params($this->conn, $query, $params);
+        }
+        
         $todos = [];
         if ($result && pg_num_rows($result) > 0) {
             while ($row = pg_fetch_assoc($result)) {
@@ -36,8 +59,7 @@ class TodoModel
 
     public function createTodo($title, $description)
     {
-        // Menggunakan 'title' dan 'description'
-        // Kolom 'is_finished', 'created_at', 'updated_at' akan diisi oleh DEFAULT di DB
+        // ... (Fungsi ini tetap sama) ...
         $query = 'INSERT INTO todo (title, description) VALUES ($1, $2)';
         $result = pg_query_params($this->conn, $query, [$title, $description]);
         return $result !== false;
@@ -45,35 +67,26 @@ class TodoModel
 
     public function updateTodo($id, $title, $description, $is_finished)
     {
-        // Memperbarui kolom-kolom baru
-        // 'updated_at' akan di-handle oleh trigger 'update_timestamp' Anda
+        // ... (Fungsi ini tetap sama) ...
         $query = 'UPDATE todo SET title=$1, description=$2, is_finished=$3 WHERE id=$4';
-        
-        // Konversi boolean PHP (true/false) ke string 't'/'f' untuk PostgreSQL
         $is_finished_db = $is_finished ? 't' : 'f';
-        
         $result = pg_query_params($this->conn, $query, [$title, $description, $is_finished_db, $id]);
         return $result !== false;
     }
 
     public function deleteTodo($id)
     {
+        // ... (Fungsi ini tetap sama) ...
         $query = 'DELETE FROM todo WHERE id=$1';
         $result = pg_query_params($this->conn, $query, [$id]);
         return $result !== false;
     }
 
-    /**
-     * Fungsi baru (opsional) untuk hanya mengubah status selesai/belum selesai
-     * Ini akan sangat berguna untuk fitur checklist nanti.
-     */
     public function updateTodoStatus($id, $is_finished)
     {
+        // ... (Fungsi ini tetap sama) ...
         $query = 'UPDATE todo SET is_finished=$1 WHERE id=$2';
-        
-        // Konversi boolean PHP (true/false) ke string 't'/'f'
         $is_finished_db = $is_finished ? 't' : 'f';
-        
         $result = pg_query_params($this->conn, $query, [$is_finished_db, $id]);
         return $result !== false;
     }

@@ -5,21 +5,31 @@ class TodoController
 {
     public function index()
     {
+        // 1. Tentukan filter yang aktif
+        $filter = 'all'; // Default filter
+        if (isset($_GET['filter'])) {
+            if ($_GET['filter'] === 'finished') {
+                $filter = 'finished';
+            } elseif ($_GET['filter'] === 'unfinished') {
+                $filter = 'unfinished';
+            }
+        }
+
+        // 2. Panggil model dengan filter yang sesuai
         $todoModel = new TodoModel();
-        $todos = $todoModel->getAllTodos();
+        $todos = $todoModel->getAllTodos($filter); // Teruskan $filter ke model
+        
+        // 3. Muat view (View akan membutuhkan $todos dan $filter)
         include (__DIR__ . '/../views/TodoView.php');
     }
 
     public function create()
     {
+        // ... (Fungsi ini tetap sama) ...
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Mengambil 'title' dan 'description' dari form (sebelumnya 'activity')
             $title = $_POST['title'];
-            $description = $_POST['description']; // Menambahkan field baru
-            
+            $description = $_POST['description']; 
             $todoModel = new TodoModel();
-            
-            // Memanggil fungsi model yang baru
             $todoModel->createTodo($title, $description);
         }
         header('Location: index.php');
@@ -27,21 +37,13 @@ class TodoController
 
     public function update()
     {
+        // ... (Fungsi ini tetap sama) ...
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = $_POST['id'];
-            
-            // Mengambil data baru dari form
             $title = $_POST['title'];
             $description = $_POST['description'];
-            
-            // Cara menangani Checkbox (boolean)
-            // Jika checkbox 'is_finished' dicentang, 'isset' akan true.
-            // Jika tidak dicentang, 'isset' akan false.
             $is_finished = isset($_POST['is_finished']); 
-            
             $todoModel = new TodoModel();
-            
-            // Memanggil fungsi update model yang baru
             $todoModel->updateTodo($id, $title, $description, $is_finished);
         }
         header('Location: index.php');
@@ -49,6 +51,7 @@ class TodoController
 
     public function delete()
     {
+        // ... (Fungsi ini tetap sama) ...
         if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
             $id = $_GET['id'];
             $todoModel = new TodoModel();
