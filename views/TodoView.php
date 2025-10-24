@@ -14,6 +14,13 @@
             </div>
             <hr />
 
+            <?php if (isset($_SESSION['error'])): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <?= $_SESSION['error'] ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <?php unset($_SESSION['error']); // Hapus pesan error setelah ditampilkan ?>
+            <?php endif; ?>
             <ul class="nav nav-pills mb-3">
                 <li class="nav-item">
                     <a class="nav-link <?php if ($filter === 'all') echo 'active'; ?>" 
@@ -33,15 +40,14 @@
                 <?php if ($filter !== 'all'): ?>
                     <input type="hidden" name="filter" value="<?= htmlspecialchars($filter) ?>">
                 <?php endif; ?>
-                
                 <div class="input-group">
                     <input type="text" name="search" class="form-control" 
                            placeholder="Cari berdasarkan judul atau deskripsi..." 
                            value="<?= htmlspecialchars($search) ?>">
-                    
                     <button class="btn btn-outline-secondary" type="submit">Cari</button>
                 </div>
             </form>
+            
             <table class="table table-striped">
                 <thead>
                     <tr>
@@ -120,7 +126,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
                     <button type="submit" class="btn btn-primary">Save</button>
                 </div>
             </form>
@@ -182,10 +188,9 @@
     </div>
 </div>
 
-
 <script src="/assets/vendor/bootstrap-5.3.8-dist/js/bootstrap.min.js"></script>
 <script>
-// ... (FungSI Javascript showModalEditTodo dan showModalDeleteTodo tetap sama) ...
+// ... (Javascript tetap sama) ...
 function showModalEditTodo(todoId, title, description, is_finished) {
     document.getElementById("inputEditTodoId").value = todoId;
     document.getElementById("inputEditTitle").value = title;
@@ -203,4 +208,4 @@ function showModalDeleteTodo(todoId, title) {
 }
 </script>
 </body>
-</html>
+</html> 

@@ -1,23 +1,23 @@
 <?php
-if (isset($_GET['page'])) {
-    $page = $_GET['page'];
-} else {
-    $page = 'index';
-}
-include ('../controllers/TodoController.php');
+session_start(); // MEMULAI SESSION (PENTING UNTUK ERROR HANDLING)
 
-$todoController = new TodoController();
+require_once (__DIR__ . '/../controllers/TodoController.php');
+
+$page = isset($_GET['page']) ? $_GET['page'] : 'index';
+$controller = new TodoController();
+
 switch ($page) {
-    case 'index':
-        $todoController->index();
-        break;
     case 'create':
-        $todoController->create();
+        $controller->create();
         break;
     case 'update':
-        $todoController->update();
+        $controller->update();
         break;
     case 'delete':
-        $todoController->delete();
+        $controller->delete();
+        break;
+    case 'index':
+    default:
+        $controller->index();
         break;
 }
