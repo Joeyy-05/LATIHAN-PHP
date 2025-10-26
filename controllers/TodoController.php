@@ -23,35 +23,66 @@ class TodoController
         include (__DIR__ . '/../views/TodoView.php');
     }
 
-    /**
-     * PENAMBAHAN BARU: Fungsi untuk Detail (POIN 5)
-     */
     public function detail()
     {
-        // 1. Pastikan ID ada di URL
+        // ... (Fungsi detail tetap sama seperti Poin 5) ...
         if (!isset($_GET['id'])) {
             $_SESSION['error'] = 'Error: ID Todo tidak ditemukan.';
             header('Location: index.php');
             return;
         }
-
         $id = $_GET['id'];
         $todoModel = new TodoModel();
-        
-        // 2. Ambil data todo berdasarkan ID
         $todo = $todoModel->getTodoById($id);
-
-        // 3. Cek apakah todo ditemukan
         if (!$todo) {
             $_SESSION['error'] = 'Error: Data Todo tidak ditemukan.';
             header('Location: index.php');
             return;
         }
-
-        // 4. Jika ditemukan, muat file view baru (TodoDetailView.php)
-        //    dan kirimkan data $todo ke view tersebut.
         include (__DIR__ . '/../views/TodoDetailView.php');
     }
+
+    /**
+     * PENAMBAHAN BARU: Fungsi untuk Sorting (POIN 6)
+     * Ini adalah endpoint API, bukan halaman.
+     */
+    public function updateOrder()
+    {
+        // Hanya izinkan metode POST
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            
+            // Baca data JSON mentah dari body request
+            $json = file_get_contents('php://input');
+            
+            // Decode JSON menjadi array PHP
+            $data = json_decode($json, true);
+
+            // Periksa apakah data 'order' ada dan merupakan array
+            if (isset($data['order']) && is_array($data['order'])) {
+                $todoModel = new TodoModel();
+                $success = $todoModel->updateTodoOrder($data['order']);
+
+                // Kirim respons JSON kembali ke JavaScript
+                header('Content-Type: application/json');
+                if ($success) {
+                    echo json_encode(['success' => true, 'message' => 'Urutan disimpan.']);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Gagal menyimpan urutan.']);
+                }
+            } else {
+                // Data tidak valid
+                header('Content-Type: application/json', true, 400); // Bad Request
+                echo json_encode(['success' => false, 'message' => 'Data order tidak valid.']);
+            }
+        } else {
+            // Metode tidak diizinkan
+            header('Content-Type: application/json', true, 405); // Method Not Allowed
+            echo json_encode(['success' => false, 'message' => 'Metode tidak diizinkan.']);
+        }
+        // Hentikan eksekusi skrip karena ini adalah API endpoint
+        exit;
+    }
+
 
     public function create()
     {
@@ -101,4 +132,4 @@ class TodoController
         }
         header('Location: index.php');
     }
-}   
+}

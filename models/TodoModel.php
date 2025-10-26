@@ -16,13 +16,12 @@ class TodoModel
 
     public function getAllTodos($filter = 'all', $search = '')
     {
-        // ... (Fungsi getAllTodos tetap sama seperti Poin 3) ...
+        // ... (Query dasar dan WHERE tetap sama seperti Poin 3) ...
         $query = 'SELECT id, title, description, is_finished, created_at, updated_at 
                   FROM todo';
         $params = [];
         $whereClauses = [];
         $paramCounter = 1; 
-
         if ($filter === 'finished') {
             $whereClauses[] = 'is_finished = $' . $paramCounter++;
             $params[] = 't'; 
@@ -30,17 +29,16 @@ class TodoModel
             $whereClauses[] = 'is_finished = $' . $paramCounter++;
             $params[] = 'f'; 
         }
-
         if (!empty($search)) {
             $whereClauses[] = '(title ILIKE $' . $paramCounter . ' OR description ILIKE $' . $paramCounter . ')';
             $params[] = '%' . $search . '%'; 
         }
-
         if (!empty($whereClauses)) {
             $query .= ' WHERE ' . implode(' AND ', $whereClauses);
         }
 
-        $query .= ' ORDER BY id ASC';
+        // MODIFIKASI (POIN 6): Mengurutkan berdasarkan sort_order
+        $query .= ' ORDER BY sort_order ASC';
         
         if (empty($params)) {
             $result = pg_query($this->conn, $query);
@@ -60,41 +58,70 @@ class TodoModel
 
     public function getTodoByTitle($title)
     {
-        // ... (Fungsi getTodoByTitle tetap sama seperti Poin 4) ...
+        // ... (Fungsi ini tetap sama) ...
         $query = 'SELECT * FROM todo WHERE title ILIKE $1 LIMIT 1';
         $result = pg_query_params($this->conn, $query, [$title]);
-        
-        if ($result && pg_num_rows($result) > 0) {
-            return pg_fetch_assoc($result); 
-        }
+        if ($result && pg_num_rows($result) > 0) { return pg_fetch_assoc($result); }
         return null; 
     }
 
-    /**
-     * PENAMBAHAN BARU: Fungsi untuk Detail (POIN 5)
-     * Mengambil satu todo berdasarkan ID-nya.
-     */
     public function getTodoById($id)
     {
+        // ... (Fungsi ini tetap sama) ...
         $query = 'SELECT * FROM todo WHERE id = $1 LIMIT 1';
         $result = pg_query_params($this->conn, $query, [$id]);
-
         if ($result && pg_num_rows($result) > 0) {
             $row = pg_fetch_assoc($result);
-            // Konversi boolean 't'/'f'
             $row['is_finished'] = ($row['is_finished'] === 't');
             return $row;
         }
-        return null; // Kembalikan null jika ID tidak ditemukan
+        return null; 
     }
 
 
     public function createTodo($title, $description)
     {
-        // ... (Fungsi ini tetap sama) ...
-        $query = 'INSERT INTO todo (title, description) VALUES ($1, $2)';
-        $result = pg_query_params($this->conn, $query, [$title, $description]);
+        // MODIFIKASI (POIN 6): Mendapatkan sort_order berikutnya
+        // Kita atur urutan baru sebagai (nilai max saat ini) + 1
+        $orderQuery = 'SELECT COALESCE(MAX(sort_order), 0) + 1 AS next_order FROM todo';
+        $orderResult = pg_query($this->conn, $orderQuery);
+        $next_order = pg_fetch_assoc($orderResult)['next_order'];
+
+        // Menggunakan 'title', 'description', dan 'sort_order'
+        $query = 'INSERT INTO todo (title, description, sort_order) VALUES ($1, $2, $3)';
+        $result = pg_query_params($this->conn, $query, [$title, $description, $next_order]);
         return $result !== false;
+    }
+
+    /**
+     * PENAMBAHAN BARU: Fungsi untuk menyimpan urutan (POIN 6)
+     * Menerima array ID todo dalam urutan yang baru.
+     */
+    public function updateTodoOrder($id_order_array)
+    {
+        // Memulai transaksi
+        pg_query($this->conn, 'BEGIN');
+        
+        try {
+            // Loop sebanyak array ID dan update 'sort_order' satu per satu
+            // Urutan (index) array (mulai dari 0) akan menjadi 'sort_order' baru
+            foreach ($id_order_array as $index => $id) {
+                // Pastikan $id adalah integer
+                $id = (int)$id; 
+                // $index adalah urutan baru (0, 1, 2, ...)
+                $sort_order = $index; 
+                
+                $query = 'UPDATE todo SET sort_order = $1 WHERE id = $2';
+                pg_query_params($this->conn, $query, [$sort_order, $id]);
+            }
+            // Jika semua berhasil, commit transaksi
+            pg_query($this->conn, 'COMMIT');
+            return true;
+        } catch (Exception $e) {
+            // Jika ada error, batalkan (rollback)
+            pg_query($this->conn, 'ROLLBACK');
+            return false;
+        }
     }
 
     public function updateTodo($id, $title, $description, $is_finished)

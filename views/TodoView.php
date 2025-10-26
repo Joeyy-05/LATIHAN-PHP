@@ -3,6 +3,17 @@
 <head>
     <title>PHP - Aplikasi Todolist</title>
     <link href="/assets/vendor/bootstrap-5.3.8-dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        /* CSS sederhana untuk 'ghost' class seperti di example1 Anda */
+        .sortable-ghost {
+            opacity: 0.4;
+            background: #b5d6fc; /* Biru muda */
+        }
+        /* CSS untuk cursor 'move' */
+        #todo-list-body tr {
+            cursor: move; /* Menandakan item bisa di-drag */
+        }
+    </style>
 </head>
 <body>
 <div class="container-fluid p-5">
@@ -13,15 +24,13 @@
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTodo">Tambah Data</button>
             </div>
             <hr />
-
             <?php if (isset($_SESSION['error'])): ?>
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <?= $_SESSION['error'] ?>
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
-                <?php unset($_SESSION['error']); // Hapus pesan error setelah ditampilkan ?>
+                <?php unset($_SESSION['error']); ?>
             <?php endif; ?>
-
             <ul class="nav nav-pills mb-3">
                 <li class="nav-item">
                     <a class="nav-link <?php if ($filter === 'all') echo 'active'; ?>" 
@@ -36,7 +45,6 @@
                        href="index.php?filter=unfinished">Belum Selesai</a>
                 </li>
             </ul>
-            
             <form action="index.php" method="GET" class="mb-3">
                 <?php if ($filter !== 'all'): ?>
                     <input type="hidden" name="filter" value="<?= htmlspecialchars($filter) ?>">
@@ -59,10 +67,10 @@
                         <th scope="col" class="text-end">Tindakan</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="todo-list-body">
                 <?php if (!empty($todos)): ?>
                     <?php foreach ($todos as $i => $todo): ?>
-                    <tr>
+                    <tr data-id="<?= $todo['id'] ?>">
                         <td><?= $i + 1 ?></td>
                         <td><?= htmlspecialchars($todo['title']) ?></td>
                         <td>
@@ -75,11 +83,9 @@
                         <td><?= date('d F Y - H:i', strtotime($todo['created_at'])) ?></td>
                         
                         <td class="text-end" style="white-space: nowrap;">
-                            
                             <a href="index.php?page=detail&id=<?= $todo['id'] ?>" class="btn btn-sm btn-info">
                                 Detail
                             </a>
-                            
                             <button class="btn btn-sm btn-warning"
                                 onclick="showModalEditTodo(
                                     <?= $todo['id'] ?>, 
@@ -89,7 +95,6 @@
                                 )">
                                 Ubah
                             </button>
-
                             <button class="btn btn-sm btn-danger"
                                 onclick="showModalDeleteTodo(<?= $todo['id'] ?>, '<?= htmlspecialchars(addslashes($todo['title'])) ?>')">
                                 Hapus
@@ -141,7 +146,6 @@
         </div>
     </div>
 </div>
-
 <div class="modal fade" id="editTodo" tabindex="-1" aria-labelledby="editTodoLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -174,7 +178,6 @@
         </div>
     </div>
 </div>
-
 <div class="modal fade" id="deleteTodo" tabindex="-1" aria-labelledby="deleteTodoLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -197,8 +200,11 @@
 </div>
 
 <script src="/assets/vendor/bootstrap-5.3.8-dist/js/bootstrap.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
 <script>
-// ... (Javascript tetap sama) ...
+// ... (Fungsi modal tetap sama) ...
 function showModalEditTodo(todoId, title, description, is_finished) {
     document.getElementById("inputEditTodoId").value = todoId;
     document.getElementById("inputEditTitle").value = title;
@@ -214,6 +220,52 @@ function showModalDeleteTodo(todoId, title) {
     var myModal = new bootstrap.Modal(document.getElementById("deleteTodo"));
     myModal.show();
 }
+
+// 2. Inisialisasi SortableJS
+document.addEventListener('DOMContentLoaded', function() {
+    // Ambil elemen <tbody>
+    var el = document.getElementById('todo-list-body');
+    
+    // Pastikan elemen ada (tidak error jika $todos kosong)
+    if (el) {
+        new Sortable(el, {
+            animation: 150, // Sesuai example1 Anda
+            ghostClass: 'sortable-ghost', // Sesuai example1 Anda
+            
+            // Event 'onEnd' dipanggil setelah drag-and-drop selesai
+            onEnd: function (evt) {
+                // Dapatkan urutan ID baru dari atribut 'data-id'
+                var orderArray = Array.from(el.children).map(function(row) {
+                    return row.getAttribute('data-id');
+                });
+                
+                // Kirim urutan baru ke server (ke endpoint 'updateOrder')
+                fetch('index.php?page=updateOrder', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ order: orderArray }) // Kirim sebagai JSON
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('Urutan berhasil disimpan.');
+                        // (Opsional) Refresh halaman untuk memperbarui nomor '#'
+                        // location.reload(); 
+                    } else {
+                        console.error('Gagal menyimpan urutan:', data.message);
+                        alert('Gagal menyimpan urutan. Silakan refresh halaman.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Terjadi error. Silakan refresh halaman.');
+                });
+            }
+        });
+    }
+});
 </script>
 </body>
 </html>

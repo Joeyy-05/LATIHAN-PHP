@@ -16,10 +16,13 @@ switch ($page) {
     case 'delete':
         $controller->delete();
         break;
-    
-    // PENAMBAHAN BARU: Route untuk Detail (POIN 5)
     case 'detail':
-        $controller->detail(); // Kita akan buat fungsi 'detail()' ini di Controller
+        $controller->detail();
+        break;
+
+    // PENAMBAHAN BARU: Route untuk Sorting (POIN 6)
+    case 'updateOrder':
+        $controller->updateOrder(); // Kita akan buat fungsi 'updateOrder()' ini
         break;
     
     case 'index':
