@@ -23,51 +23,72 @@ class TodoController
         include (__DIR__ . '/../views/TodoView.php');
     }
 
+    /**
+     * PENAMBAHAN BARU: Fungsi untuk Detail (POIN 5)
+     */
+    public function detail()
+    {
+        // 1. Pastikan ID ada di URL
+        if (!isset($_GET['id'])) {
+            $_SESSION['error'] = 'Error: ID Todo tidak ditemukan.';
+            header('Location: index.php');
+            return;
+        }
+
+        $id = $_GET['id'];
+        $todoModel = new TodoModel();
+        
+        // 2. Ambil data todo berdasarkan ID
+        $todo = $todoModel->getTodoById($id);
+
+        // 3. Cek apakah todo ditemukan
+        if (!$todo) {
+            $_SESSION['error'] = 'Error: Data Todo tidak ditemukan.';
+            header('Location: index.php');
+            return;
+        }
+
+        // 4. Jika ditemukan, muat file view baru (TodoDetailView.php)
+        //    dan kirimkan data $todo ke view tersebut.
+        include (__DIR__ . '/../views/TodoDetailView.php');
+    }
+
     public function create()
     {
+        // ... (Fungsi create tetap sama seperti Poin 4) ...
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $title = trim($_POST['title']); // trim() untuk validasi
+            $title = trim($_POST['title']); 
             $description = $_POST['description']; 
-            
             $todoModel = new TodoModel();
-
-            // VALIDASI (POIN 4)
             $existingTodo = $todoModel->getTodoByTitle($title);
             
             if ($existingTodo) {
-                // Jika judul sudah ada, atur pesan error ke session
                 $_SESSION['error'] = 'Gagal! Judul todo "' . htmlspecialchars($title) . '" sudah ada.';
             } else {
-                // Jika tidak ada, baru buat data
                 $todoModel->createTodo($title, $description);
             }
         }
-        header('Location: index.php'); // Selalu redirect kembali
+        header('Location: index.php');
     }
 
     public function update()
     {
+        // ... (Fungsi update tetap sama seperti Poin 4) ...
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = $_POST['id'];
-            $title = trim($_POST['title']); // trim() untuk validasi
+            $title = trim($_POST['title']); 
             $description = $_POST['description'];
             $is_finished = isset($_POST['is_finished']); 
-            
             $todoModel = new TodoModel();
-
-            // VALIDASI (POIN 4)
             $existingTodo = $todoModel->getTodoByTitle($title);
             
-            // Cek: Apakah judul sudah ada DAN ID-nya BEDA dengan yang sedang di-edit
             if ($existingTodo && $existingTodo['id'] != $id) {
-                // Jika ya, itu duplikat
                 $_SESSION['error'] = 'Gagal! Judul todo "' . htmlspecialchars($title) . '" sudah ada.';
             } else {
-                // Jika tidak, aman untuk update
                 $todoModel->updateTodo($id, $title, $description, $is_finished);
             }
         }
-        header('Location: index.php'); // Selalu redirect kembali
+        header('Location: index.php');
     }
 
     public function delete()
@@ -80,4 +101,4 @@ class TodoController
         }
         header('Location: index.php');
     }
-}
+}   

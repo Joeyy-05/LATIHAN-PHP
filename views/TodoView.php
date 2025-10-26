@@ -21,6 +21,7 @@
                 </div>
                 <?php unset($_SESSION['error']); // Hapus pesan error setelah ditampilkan ?>
             <?php endif; ?>
+
             <ul class="nav nav-pills mb-3">
                 <li class="nav-item">
                     <a class="nav-link <?php if ($filter === 'all') echo 'active'; ?>" 
@@ -55,7 +56,7 @@
                         <th scope="col">Judul</th>
                         <th scope="col">Status</th>
                         <th scope="col">Tanggal Dibuat</th>
-                        <th scope="col">Tindakan</th>
+                        <th scope="col" class="text-end">Tindakan</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -72,7 +73,13 @@
                             <?php endif; ?>
                         </td>
                         <td><?= date('d F Y - H:i', strtotime($todo['created_at'])) ?></td>
-                        <td>
+                        
+                        <td class="text-end" style="white-space: nowrap;">
+                            
+                            <a href="index.php?page=detail&id=<?= $todo['id'] ?>" class="btn btn-sm btn-info">
+                                Detail
+                            </a>
+                            
                             <button class="btn btn-sm btn-warning"
                                 onclick="showModalEditTodo(
                                     <?= $todo['id'] ?>, 
@@ -82,6 +89,7 @@
                                 )">
                                 Ubah
                             </button>
+
                             <button class="btn btn-sm btn-danger"
                                 onclick="showModalDeleteTodo(<?= $todo['id'] ?>, '<?= htmlspecialchars(addslashes($todo['title'])) ?>')">
                                 Hapus
@@ -208,4 +216,4 @@ function showModalDeleteTodo(todoId, title) {
 }
 </script>
 </body>
-</html> 
+</html>

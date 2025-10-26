@@ -58,21 +58,36 @@ class TodoModel
         return $todos;
     }
 
-    /**
-     * PENAMBAHAN BARU: Fungsi untuk Validasi (POIN 4)
-     * Mencari todo berdasarkan judul (case-insensitive)
-     */
     public function getTodoByTitle($title)
     {
-        // Gunakan ILIKE untuk case-insensitive
+        // ... (Fungsi getTodoByTitle tetap sama seperti Poin 4) ...
         $query = 'SELECT * FROM todo WHERE title ILIKE $1 LIMIT 1';
         $result = pg_query_params($this->conn, $query, [$title]);
         
         if ($result && pg_num_rows($result) > 0) {
-            return pg_fetch_assoc($result); // Kembalikan data todo jika ditemukan
+            return pg_fetch_assoc($result); 
         }
-        return null; // Kembalikan null jika tidak ditemukan
+        return null; 
     }
+
+    /**
+     * PENAMBAHAN BARU: Fungsi untuk Detail (POIN 5)
+     * Mengambil satu todo berdasarkan ID-nya.
+     */
+    public function getTodoById($id)
+    {
+        $query = 'SELECT * FROM todo WHERE id = $1 LIMIT 1';
+        $result = pg_query_params($this->conn, $query, [$id]);
+
+        if ($result && pg_num_rows($result) > 0) {
+            $row = pg_fetch_assoc($result);
+            // Konversi boolean 't'/'f'
+            $row['is_finished'] = ($row['is_finished'] === 't');
+            return $row;
+        }
+        return null; // Kembalikan null jika ID tidak ditemukan
+    }
+
 
     public function createTodo($title, $description)
     {

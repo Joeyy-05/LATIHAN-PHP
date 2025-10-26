@@ -1,5 +1,5 @@
 <?php
-session_start(); // MEMULAI SESSION (PENTING UNTUK ERROR HANDLING)
+session_start(); // (Sudah ada dari Poin 4)
 
 require_once (__DIR__ . '/../controllers/TodoController.php');
 
@@ -16,6 +16,12 @@ switch ($page) {
     case 'delete':
         $controller->delete();
         break;
+    
+    // PENAMBAHAN BARU: Route untuk Detail (POIN 5)
+    case 'detail':
+        $controller->detail(); // Kita akan buat fungsi 'detail()' ini di Controller
+        break;
+    
     case 'index':
     default:
         $controller->index();
